@@ -3,13 +3,14 @@
 
 declare namespace JSX {
   interface IntrinsicElements {
-    "s-app-nav": React.DetailedHTMLProps
-      React.HTMLAttributes<HTMLElement>,
-      HTMLElement
-    >;
-    "s-link": React.DetailedHTMLProps
-      React.AnchorHTMLAttributes<HTMLElement> & { href?: string },
-      HTMLElement
-    >;
+    "s-app-nav": {
+      children?: import("react").ReactNode;
+      [key: string]: unknown;
+    };
+    "s-link": {
+      href?: string;
+      children?: import("react").ReactNode;
+      [key: string]: unknown;
+    };
   }
 }
