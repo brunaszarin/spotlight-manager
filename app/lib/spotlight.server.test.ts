@@ -15,6 +15,7 @@ import {
   getSpotlights,
   createSpotlight,
   deleteSpotlight,
+  deleteSpotlightsByProduct,
 } from "./spotlight.server";
 
 beforeEach(() => {
@@ -64,6 +65,24 @@ describe("deleteSpotlight", () => {
 
     expect(mockDb.spotlight.deleteMany).toHaveBeenCalledWith({
       where: { id: "1", shop: "test.myshopify.com" },
+    });
+  });
+});
+
+describe("deleteSpotlightsByProduct", () => {
+  it("deletes all spotlights for a product", async () => {
+    mockDb.spotlight.deleteMany.mockResolvedValue({ count: 2 });
+
+    await deleteSpotlightsByProduct(
+      "gid://shopify/Product/1",
+      "test.myshopify.com"
+    );
+
+    expect(mockDb.spotlight.deleteMany).toHaveBeenCalledWith({
+      where: {
+        productId: "gid://shopify/Product/1",
+        shop: "test.myshopify.com",
+      },
     });
   });
 });

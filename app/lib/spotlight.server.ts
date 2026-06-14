@@ -38,3 +38,12 @@ export async function deleteSpotlight(id: string, shop: string) {
     where: { id, shop },
   });
 }
+
+export async function deleteSpotlightsByProduct(
+  productId: string,
+  shop: string
+) {
+  return db.spotlight.deleteMany({
+    where: { productId, shop },
+  });
+}
