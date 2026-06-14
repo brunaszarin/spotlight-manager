@@ -15,8 +15,12 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "target": "ES2022",
-    "baseUrl": ".",
-    "types": ["@react-router/node", "vite/client", "@shopify/polaris-types"],
+    "types": [
+      "@react-router/node",
+      "vite/client",
+      "@shopify/polaris-types",
+      "vitest/globals"
+    ],
     "rootDirs": [".", "./.react-router/types"]
   }
 }

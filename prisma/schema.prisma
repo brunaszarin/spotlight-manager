@@ -32,3 +32,17 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+model Spotlight {
+  id          String   @id @default(cuid())
+  shop        String
+  productId   String
+  productTitle String
+  badgeText   String
+  badgeColor  String   @default("#008060")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shop])
+}
