@@ -9,7 +9,6 @@ import {
   Badge,
   Button,
   EmptyState,
-  BlockStack,
   InlineStack,
   Box,
 } from "@shopify/polaris";
