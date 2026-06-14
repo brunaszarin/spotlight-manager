@@ -14,7 +14,6 @@ import {
   Banner,
   ColorPicker,
   hsbToHex,
-  hexToRgb,
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
