@@ -39,56 +39,58 @@ export default function Index() {
     }
   }
 
-  const rowMarkup = spotlights.map((spotlight, index) => (
-    <IndexTable.Row id={spotlight.id} key={spotlight.id} position={index}>
-      <IndexTable.Cell>
-        <Text variant="bodyMd" fontWeight="bold" as="span">
-          {spotlight.productTitle}
-        </Text>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <InlineStack gap="200" align="center">
-          <Box
-            background="bg-surface"
-            borderRadius="100"
-            padding="100"
-            borderColor="border"
-            borderWidth="025"
+  const rowMarkup = spotlights.map(
+    (spotlight: (typeof spotlights)[number], index: number) => (
+      <IndexTable.Row id={spotlight.id} key={spotlight.id} position={index}>
+        <IndexTable.Cell>
+          <Text variant="bodyMd" fontWeight="bold" as="span">
+            {spotlight.productTitle}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <InlineStack gap="200" align="center">
+            <Box
+              background="bg-surface"
+              borderRadius="100"
+              padding="100"
+              borderColor="border"
+              borderWidth="025"
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  backgroundColor: spotlight.badgeColor,
+                }}
+              />
+            </Box>
+            <Badge>{spotlight.badgeText}</Badge>
+          </InlineStack>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Badge tone={spotlight.isActive ? "success" : "critical"}>
+            {spotlight.isActive ? "Ativo" : "Inativo"}
+          </Badge>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text as="span" variant="bodyMd" tone="subdued">
+            {new Date(spotlight.createdAt).toLocaleDateString("pt-BR")}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Button
+            tone="critical"
+            variant="plain"
+            onClick={() => handleDelete(spotlight.id)}
           >
-            <span
-              style={{
-                display: "inline-block",
-                width: 16,
-                height: 16,
-                borderRadius: "50%",
-                backgroundColor: spotlight.badgeColor,
-              }}
-            />
-          </Box>
-          <Badge>{spotlight.badgeText}</Badge>
-        </InlineStack>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <Badge tone={spotlight.isActive ? "success" : "critical"}>
-          {spotlight.isActive ? "Ativo" : "Inativo"}
-        </Badge>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <Text as="span" variant="bodyMd" tone="subdued">
-          {new Date(spotlight.createdAt).toLocaleDateString("pt-BR")}
-        </Text>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <Button
-          tone="critical"
-          variant="plain"
-          onClick={() => handleDelete(spotlight.id)}
-        >
-          Excluir
-        </Button>
-      </IndexTable.Cell>
-    </IndexTable.Row>
-  ));
+            Excluir
+          </Button>
+        </IndexTable.Cell>
+      </IndexTable.Row>
+    )
+  );
 
   return (
     <Page
