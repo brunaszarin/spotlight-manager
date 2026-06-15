@@ -2,7 +2,6 @@
   "name": "spotlight-manager",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
     "build": "react-router build",
     "dev": "shopify app dev",
     "config:link": "shopify app config link",
