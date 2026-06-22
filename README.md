@@ -18,31 +18,20 @@ Projeto construído como portfólio técnico para demonstrar conhecimento práti
 ---
 
 ## Arquitetura
-┌──────────────────────────┐         ┌───────────────────────────┐
 
-│   Admin App (embedded)    │         │   Theme App Extension      │
+**Admin App (embedded)** — React Router + Polaris. Roda dentro do iframe do Admin da Shopify. Responsável por criar, editar e excluir spotlights.
 
-│   React Router + Polaris  │         │   App Block (Liquid + JS)  │
+**Theme App Extension** — App Block escrito em Liquid + JavaScript. Roda no storefront (página do produto) e busca os dados via `fetch()`.
 
-│   - Cria/edita/exclui      │         │   - Roda no storefront      │
+**API pública** (`/api/spotlight`) — ponte entre os dois mundos acima. Sem autenticação de admin (o cliente final não tem sessão), com CORS liberado, retornando apenas dados não sensíveis.
 
-│     spotlights              │         │   - Busca via fetch()        │
+**Banco de dados** — PostgreSQL no Railway, acessado via Prisma, compartilhado entre o Admin App e a API pública.
 
-└─────────────┬──────────────┘         └─────────────┬────────────┘
+Fluxo resumido:
 
-│                                       │
-
-│     API pública (/api/spotlight)       │
-
-└───────────────────┬───────────────────┘
-
-│
-
-PostgreSQL (Railway) via Prisma
-
-- **Admin App**: rotas autenticadas via OAuth (`authenticate.admin`), usadas pelo lojista.
-- **API pública**: rota sem autenticação de admin, consumida pelo JavaScript do tema (CORS liberado), retornando apenas dados não sensíveis (texto e cor do badge).
-- **Theme App Extension**: bloco Liquid instalável visualmente no Theme Editor, que faz a ponte entre o storefront e a API do app.
+```
+Admin App  -->  banco PostgreSQL (Prisma)  -->  API pública  -->  Theme App Extension  -->  Storefront
+```
 
 ---
 
@@ -77,54 +66,42 @@ PostgreSQL (Railway) via Prisma
 ## Decisões técnicas e trade-offs
 
 **Navegação client-side obrigatória em apps embedded**
+
 Dentro do iframe do Admin, qualquer navegação (links e redirects de `action`) precisa ser feita via `useNavigate`/`useFetcher` do React Router. Usar `<a href>`, a prop `url` direta do Polaris `Button`, ou `Response.redirect()` do servidor faz o Admin tentar tratar a navegação como saída de página, quebrando o contexto do App Bridge.
 
 **Autenticação da API pública**
+
 A rota `/api/spotlight`, consumida pelo storefront, não usa `authenticate.admin` (não há sessão de admin no contexto do cliente final). Para dados não sensíveis (texto/cor de um badge), a verificação por `shop` + `productId` na query string foi considerada suficiente. Para dados sensíveis, a abordagem mais robusta seria um **App Proxy**, que assina a requisição através do domínio da própria loja.
 
 **PostgreSQL em vez de SQLite**
+
 O template padrão do Shopify usa SQLite, adequado apenas para instância única. Como o deploy roda no Railway (que recicla containers e não garante volume persistente entre deploys), o projeto foi migrado para PostgreSQL desde o início do desenvolvimento.
 
 ---
 
 ## Estrutura do projeto
-app/
 
-├── routes/
+```
+app/routes/app._index.tsx              Dashboard (lista de spotlights)
+app/routes/app.spotlight.new.tsx       Criacao de spotlight
+app/routes/app.spotlight.$id.tsx       Edicao de spotlight
+app/routes/api.spotlight.tsx           API publica consumida pelo storefront
+app/routes/webhooks.products.delete.tsx
+app/routes/__tests__/                  Testes de rotas
+app/lib/spotlight.server.ts            Camada de acesso a dados (Prisma)
+app/shopify.server.ts                  Configuracao de auth e API
 
-│   ├── app._index.tsx              # Dashboard (lista de spotlights)
+extensions/spotlight-badge/blocks/spotlight-badge.liquid   App Block
 
-│   ├── app.spotlight.new.tsx       # Criação de spotlight
-
-│   ├── app.spotlight.$id.tsx       # Edição de spotlight
-
-│   ├── api.spotlight.tsx           # API pública consumida pelo storefront
-
-│   ├── webhooks.products.delete.tsx
-
-│   └── tests/                  # Testes de rotas (fora do file-based routing)
-
-├── lib/
-
-│   └── spotlight.server.ts         # Camada de acesso a dados (Prisma)
-
-└── shopify.server.ts                # Configuração de auth e API
-extensions/
-
-└── spotlight-badge/
-
-└── blocks/
-
-└── spotlight-badge.liquid   # App Block do Theme App Extension
-prisma/
-
-└── schema.prisma                    # Modelos Session e Spotlight
+prisma/schema.prisma                   Modelos Session e Spotlight
+```
 
 ---
 
 ## Rodando localmente
 
 ### Pré-requisitos
+
 - Node.js 20.19+ ou 22.12+
 - Conta no [Shopify Partners](https://partners.shopify.com) com uma loja de desenvolvimento
 - Banco PostgreSQL (local ou um serviço gratuito como Railway/Supabase)
@@ -136,7 +113,10 @@ npm install
 ```
 
 Cria um `.env` na raiz com:
+
+```
 DATABASE_URL="postgresql://usuario:senha@host:porta/database"
+```
 
 Gera o client do Prisma e aplica as migrations:
 
@@ -154,16 +134,16 @@ shopify app dev
 ### Testes
 
 ```bash
-npm run test           # roda os testes uma vez
-npm run test:watch     # modo watch
-npm run lint            # ESLint
-npm run typecheck       # verificação de tipos
+npm run test
+npm run test:watch
+npm run lint
+npm run typecheck
 ```
 
 ---
 
 ## CI/CD
 
-- **`.github/workflows/ci.yml`**: roda em todo PR para `main`/`develop` — lint, typecheck e testes.
-- **`.github/workflows/deploy.yml`**: dispara deploy automático no Railway a cada push na `main`.
+- `.github/workflows/ci.yml`: roda em todo PR para `main`/`develop` — lint, typecheck e testes.
+- `.github/workflows/deploy.yml`: dispara deploy automático no Railway a cada push na `main`.
 - Branch `main` protegida: exige PR e checks de CI verdes antes de merge.
