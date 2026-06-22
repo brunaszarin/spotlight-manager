@@ -1,4 +1,4 @@
-import { useLoaderData, useSubmit } from "react-router";
+import { useLoaderData, useSubmit, useNavigate } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import {
   Page,
@@ -32,6 +32,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Index() {
   const { spotlights } = useLoaderData<typeof loader>();
   const submit = useSubmit();
+  const navigate = useNavigate();
 
   function handleDelete(id: string) {
     if (confirm("Tem certeza que deseja excluir este spotlight?")) {
@@ -80,13 +81,21 @@ export default function Index() {
           </Text>
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <Button
-            tone="critical"
-            variant="plain"
-            onClick={() => handleDelete(spotlight.id)}
-          >
-            Excluir
-          </Button>
+          <InlineStack gap="200">
+            <Button
+              variant="plain"
+              onClick={() => navigate(`/app/spotlight/${spotlight.id}`)}
+            >
+              Editar
+            </Button>
+            <Button
+              tone="critical"
+              variant="plain"
+              onClick={() => handleDelete(spotlight.id)}
+            >
+              Excluir
+            </Button>
+          </InlineStack>
         </IndexTable.Cell>
       </IndexTable.Row>
     )
@@ -96,7 +105,7 @@ export default function Index() {
     <Page
       title="Spotlight Manager"
       primaryAction={
-        <Button variant="primary" url="/app/spotlight/new">
+        <Button variant="primary" onClick={() => navigate("/app/spotlight/new")}>
           Criar Spotlight
         </Button>
       }

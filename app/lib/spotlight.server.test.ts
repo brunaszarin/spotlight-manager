@@ -6,6 +6,7 @@ const mockDb = vi.hoisted(() => ({
     findFirst: vi.fn(),
     create: vi.fn(),
     deleteMany: vi.fn(),
+    updateMany: vi.fn(),
   },
 }));
 
@@ -16,6 +17,7 @@ import {
   createSpotlight,
   deleteSpotlight,
   deleteSpotlightsByProduct,
+  updateSpotlight,
 } from "./spotlight.server";
 
 beforeEach(() => {
@@ -57,6 +59,7 @@ describe("createSpotlight", () => {
   });
 });
 
+
 describe("deleteSpotlight", () => {
   it("deletes spotlight by id and shop", async () => {
     mockDb.spotlight.deleteMany.mockResolvedValue({ count: 1 });
@@ -68,6 +71,7 @@ describe("deleteSpotlight", () => {
     });
   });
 });
+
 
 describe("deleteSpotlightsByProduct", () => {
   it("deletes all spotlights for a product", async () => {
@@ -85,4 +89,19 @@ describe("deleteSpotlightsByProduct", () => {
       },
     });
   });
+
+  describe("updateSpotlight", () => {
+  it("updates only the provided fields", async () => {
+    mockDb.spotlight.updateMany.mockResolvedValue({ count: 1 });
+
+    await updateSpotlight("1", "test.myshopify.com", {
+      badgeText: "Promoção",
+    });
+
+    expect(mockDb.spotlight.updateMany).toHaveBeenCalledWith({
+      where: { id: "1", shop: "test.myshopify.com" },
+      data: { badgeText: "Promoção" },
+    });
+  });
+});
 });
