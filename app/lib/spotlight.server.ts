@@ -47,3 +47,19 @@ export async function deleteSpotlightsByProduct(
     where: { productId, shop },
   });
 }
+
+export async function updateSpotlight(
+  id: string,
+  shop: string,
+  data: Partial<SpotlightInput>
+) {
+  return db.spotlight.updateMany({
+    where: { id, shop },
+    data: {
+      ...(data.productId && { productId: data.productId }),
+      ...(data.productTitle && { productTitle: data.productTitle }),
+      ...(data.badgeText && { badgeText: data.badgeText }),
+      ...(data.badgeColor && { badgeColor: data.badgeColor }),
+    },
+  });
+}
