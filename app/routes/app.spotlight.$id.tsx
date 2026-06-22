@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate, useFetcher } from "react-router";
-import type { ActionFunctionArgs } from "react-router";
+import { useNavigate, useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import {
   Page,
   Layout,
@@ -17,45 +17,76 @@ import {
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
-import { createSpotlight } from "../lib/spotlight.server";
+import { getSpotlight, updateSpotlight } from "../lib/spotlight.server";
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const { session } = await authenticate.admin(request);
+  const spotlight = await getSpotlight(params.id as string, session.shop);
+
+  if (!spotlight) {
+    throw new Response("Spotlight não encontrado", { status: 404 });
+  }
+
+  return { spotlight };
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
   const { session } = await authenticate.admin(request);
   const formData = await request.formData();
 
-  await createSpotlight({
-    shop: session.shop,
+  await updateSpotlight(params.id as string, session.shop, {
     productId: formData.get("productId") as string,
     productTitle: formData.get("productTitle") as string,
     badgeText: formData.get("badgeText") as string,
     badgeColor: formData.get("badgeColor") as string,
   });
 
-  return { ok: true };
+return { ok: true };
 }
 
-export default function NewSpotlight() {
+function hexToHsb(hex: string) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let hue = 0;
+  if (delta !== 0) {
+    if (max === r) hue = ((g - b) / delta) % 6;
+    else if (max === g) hue = (b - r) / delta + 2;
+    else hue = (r - g) / delta + 4;
+  }
+  hue = Math.round(hue * 60);
+  if (hue < 0) hue += 360;
+
+  const brightness = max;
+  const saturation = max === 0 ? 0 : delta / max;
+
+  return { hue, saturation, brightness };
+}
+
+export default function EditSpotlight() {
+  const { spotlight } = useLoaderData<typeof loader>();
   const shopify = useAppBridge();
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
 
-  const [productId, setProductId] = useState("");
-  const [productTitle, setProductTitle] = useState("");
-  const [badgeText, setBadgeText] = useState("");
-  const [badgeColor, setBadgeColor] = useState({
-    hue: 147,
-    saturation: 1,
-    brightness: 0.5,
-  });
+  const [productId, setProductId] = useState(spotlight.productId);
+  const [productTitle, setProductTitle] = useState(spotlight.productTitle);
+  const [badgeText, setBadgeText] = useState(spotlight.badgeText);
+  const [badgeColor, setBadgeColor] = useState(hexToHsb(spotlight.badgeColor));
   const [error, setError] = useState("");
 
   const hexColor = hsbToHex(badgeColor);
 
-  useEffect(() => {
-    if (fetcher.data?.ok) {
-      navigate("/app");
-    }
-  }, [fetcher.data, navigate]);
+useEffect(() => {
+  if (fetcher.data?.ok) {
+    navigate("/app");
+  }
+}, [fetcher.data, navigate]);
 
   const handleSelectProduct = useCallback(async () => {
     const selected = await shopify.resourcePicker({
@@ -87,7 +118,7 @@ export default function NewSpotlight() {
 
   return (
     <Page
-      title="Criar Spotlight"
+      title="Editar Spotlight"
       backAction={{ content: "Spotlights", onAction: () => navigate("/app") }}
     >
       <Layout>
@@ -125,7 +156,6 @@ export default function NewSpotlight() {
                     label="Texto do badge"
                     value={badgeText}
                     onChange={setBadgeText}
-                    placeholder="Ex: Novidade, Promoção, Destaque"
                     autoComplete="off"
                   />
                   <BlockStack gap="200">
@@ -133,10 +163,7 @@ export default function NewSpotlight() {
                       Cor do badge
                     </Text>
                     <InlineStack gap="400" blockAlign="center">
-                      <ColorPicker
-                        onChange={setBadgeColor}
-                        color={badgeColor}
-                      />
+                      <ColorPicker onChange={setBadgeColor} color={badgeColor} />
                       <BlockStack gap="100">
                         <span
                           style={{
@@ -160,7 +187,7 @@ export default function NewSpotlight() {
             <InlineStack align="end" gap="300">
               <Button onClick={() => navigate("/app")}>Cancelar</Button>
               <Button variant="primary" onClick={handleSubmit}>
-                Salvar Spotlight
+                Salvar alterações
               </Button>
             </InlineStack>
           </BlockStack>
