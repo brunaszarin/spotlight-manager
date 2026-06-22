@@ -1,0 +1,57 @@
+<div
+  id="spotlight-badge-{{ block.id }}"
+  data-product-id="{{ product.id | prepend: 'gid://shopify/Product/' }}"
+  data-app-url="{{ block.settings.app_url }}"
+></div>
+
+<script>
+  (function () {
+    var container = document.getElementById("spotlight-badge-{{ block.id }}");
+    if (!container) return;
+
+    var shop = Shopify.shop;
+    var productId = container.dataset.productId;
+    var appUrl = container.dataset.appUrl;
+
+    fetch(
+      appUrl + "/api/spotlight?shop=" + encodeURIComponent(shop) +
+      "&productId=" + encodeURIComponent(productId)
+    )
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.spotlight) return;
+
+        var badge = document.createElement("span");
+        badge.textContent = data.spotlight.badgeText;
+        badge.style.backgroundColor = data.spotlight.badgeColor;
+        badge.style.color = "#ffffff";
+        badge.style.padding = "4px 12px";
+        badge.style.borderRadius = "999px";
+        badge.style.fontSize = "13px";
+        badge.style.fontWeight = "600";
+        badge.style.display = "inline-block";
+
+        container.appendChild(badge);
+      })
+      .catch(function (err) {
+        console.error("Spotlight badge failed to load", err);
+      });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Spotlight Badge",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "app_url",
+      "label": "App URL",
+      "default": "https://spotlight-manager-production.up.railway.app"
+    }
+  ]
+}
+{% endschema %}
